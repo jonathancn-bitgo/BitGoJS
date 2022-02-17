@@ -115,8 +115,8 @@ export const coins = CoinMap.fromCoins([
   account('near', 'Near', Networks.main.near, 24, UnderlyingAsset.NEAR, NEAR_FEATURES, KeyCurve.Ed25519),
   account('tnear', 'Testnet Near', Networks.test.near, 24, UnderlyingAsset.NEAR, NEAR_FEATURES, KeyCurve.Ed25519),
   // TODO : Uncomment when core functionality is implemented
-  // account('maticl', 'MaticL', Networks.main.maticl, 18, UnderlyingAsset.MATICL, ETH_FEATURES),
-  // account('tmaticl', 'Testnet MaticL', Networks.test.maticl, 18, UnderlyingAsset.MATICL, ETH_FEATURES),
+  account('maticl', 'MaticL', Networks.main.maticl, 18, UnderlyingAsset.MATICL, ETH_FEATURES),
+  account('tmaticl', 'Testnet MaticL', Networks.test.maticl, 18, UnderlyingAsset.MATICL, ETH_FEATURES),
   erc20CompatibleAccountCoin(
     'celo',
     'Celo Gold',
