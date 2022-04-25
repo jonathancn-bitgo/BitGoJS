@@ -2,6 +2,9 @@
 'use strict'
 const bls = require('noble-bls12-381')
 const math = require('noble-bls12-381/math')
+const { createHmac } = require('crypto');
+
+const chaincodeBase = 1n << 256n;
 
 /** Convert a string to a buffer. */
 function stringToBuffer(string) {
@@ -41,6 +44,99 @@ function bufferToBigInt(buf) {
 /** Convert a native BigInt to a buffer. */
 function bigIntToBuffer(bigint) {
   return hexToBuffer(bigint.toString(16))
+}
+
+function bigIntToBufferBE(bigint, bytes) {
+  let v = bigint.toString(16);
+  v = '0'.slice(0, v.length % 2) + v;
+  const buf = Buffer.from(v, 'hex');
+  if (bytes && buf.length < bytes) {
+    return Buffer.concat([Buffer.alloc(bytes - buf.length), buf]);
+  }
+  return buf;
+}
+
+/** Integer to Octet Stream */
+function i2osp(value, length) {
+  if (value < 0 || value >= 1n << BigInt(8 * length)) {
+    throw new Error(`bad I2OSP call: value=${value} length=${length}`);
+  }
+  const res = Array.from({ length }).fill(0);
+  for (let i = length - 1; i >= 0; i--) {
+    res[i] = value & 0xff;
+    value >>>= 8;
+  }
+  return new Uint8Array(res);
+}
+
+/** Concatenate multiple buffers into one */
+function concatBytes(...arrays) {
+  if (arrays.length === 1) {
+    return arrays[0];
+  }
+  const length = arrays.reduce((a, arr) => a + arr.length, 0);
+  const result = new Uint8Array(length);
+  for (let i = 0, pad = 0; i < arrays.length; i++) {
+    const arr = arrays[i];
+    result.set(arr, pad);
+    pad += arr.length;
+  }
+  return result;
+}
+
+/** Get the indices from a sub key path string */
+function getSubKeyPathIndices(path) {
+  return path.replace(/^m\//, '')
+    .split('/')
+    .map((index) => parseInt(index, 10));
+}
+
+/** Calculate offset from a public key */
+function calculateOffset(pk, index, chaincode) {
+  const salt = i2osp(index, 4);
+  const buffer = concatBytes(pk, salt);
+  return createHmac('sha512', bigIntToBufferBE(chaincode, 32)).update(buffer).digest();
+}
+
+/** Derive a public key */
+function publicDerive(pk, chaincode, path) {
+  const indices = getSubKeyPathIndices(path);
+  function deriveIndex({ pk, chaincode }, index) {
+    const pkBuf = bigIntToBuffer(pk);
+    const zout = calculateOffset(pkBuf, index, chaincode);
+    const zl = zout.slice(0, 32);
+    const offset = bufferToBigInt(zl);
+    const offsetMod = new math.Fq(offset);
+    const pkPoint = bls.PointG1.fromCompressedHex(pkBuf);
+    const publicChild = pkPoint.add(bls.PointG1.BASE.multiply(offsetMod));
+    const zr = zout.slice(32);
+    return {
+      pk: bufferToBigInt(publicChild.toCompressedHex()),
+      chaincode: bufferToBigInt(zr),
+    };
+  }
+  return indices.reduce(deriveIndex, { pk, chaincode });
+}
+
+/** Derive a private key */
+function privateDerive(parentSk, pk, chaincode, path) {
+  const indices = getSubKeyPathIndices(path);
+  function deriveIndex({ parentSk, pk, chaincode }, index) {
+    const pkBuf = bigIntToBuffer(pk);
+    const zout = calculateOffset(pkBuf, index, chaincode);
+    const zl = zout.slice(0, 32);
+    const offset = bufferToBigInt(zl);
+    const parentSkPoint = new math.Fr(parentSk).value;
+    const pkPoint = bls.PointG1.fromCompressedHex(pkBuf);
+    const publicChild = pkPoint.add(bls.PointG1.BASE.multiply(new math.Fq(offset)));
+    const zr = zout.slice(32);
+    return {
+      parentSk: new math.Fr(parentSkPoint + offset).value,
+      pk: bufferToBigInt(publicChild.toCompressedHex()),
+      chaincode: bufferToBigInt(zr),
+    };
+  }
+  return indices.reduce(deriveIndex, { parentSk, pk, chaincode });
 }
 
 /** Return a random field element as a native BigInt. */
@@ -106,6 +202,10 @@ function mergePublicShares(shares) {
   return bufferToBigInt(sum.toCompressedHex())
 }
 
+function mergeChaincodes(chaincodes) {
+  return chaincodes.reduce((sum, chaincode) => (sum + chaincode) % chaincodeBase, 0n);
+}
+
 /** Compute Lagrange coefficients for a point in a polynomial. */
 function lagrangeCoefficients(idx) {
   const res = Array(idx.length)
@@ -159,8 +259,11 @@ if (typeof(module) !== 'undefined') {
     publicShare,
     mergeSecretShares,
     mergePublicShares,
+    mergeChaincodes,
     mergeSignatures,
     sign,
     verify,
+    privateDerive,
+    publicDerive,
   }
 }
