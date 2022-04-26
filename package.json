@@ -15,6 +15,7 @@
     "execa": "^5.0.0",
     "glob": "^7.1.6",
     "husky": "^4.3.0",
+    "jsdoc-to-json-schema": "^0.1.9",
     "lerna": "^4.0.0",
     "make-dir": "^3.1.0",
     "mocha": "^9.2.0",
@@ -23,6 +24,7 @@
     "prettier": "^2.3.0",
     "rimraf": "^3.0.2",
     "ts-node": "^9.1.1",
+    "typedoc": "^0.22.15",
     "typescript": "~4.2.4"
   },
   "resolutions": {
