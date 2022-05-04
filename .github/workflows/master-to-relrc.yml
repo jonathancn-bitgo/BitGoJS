@@ -1,0 +1,25 @@
+name: Create rel/rc pull request
+on:
+  push:
+    branches:
+      - master
+jobs:
+  relrc-promotion:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: rel/rc
+      - name: Merge latest master to rel/rc
+        run: |
+          git fetch origin master:master
+          git reset --hard master
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v4
+        with:
+          commit-message: format('chore', ':', 'merge latest to rel/rc')
+          title: Merge latest to rel/rc
+          body: |
+            chore: merge latest master to rel/rc
+            BG-000000
+          branch: master-to-rel/rc
