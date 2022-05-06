@@ -25,6 +25,7 @@ import {
   Sol,
   Stx,
   Susd,
+  FiatUsd,
   Talgo,
   TavaxC,
   Tbch,
@@ -45,6 +46,7 @@ import {
   Tsol,
   Tstx,
   Tsusd,
+  TfiatUsd,
   Ttrx,
   Xtz,
   Txtz,
@@ -174,6 +176,8 @@ GlobalCoinFactory.registerCoinConstructor('thbar', Thbar.createInstance);
 GlobalCoinFactory.registerCoinConstructor('ofc', Ofc.createInstance);
 GlobalCoinFactory.registerCoinConstructor('susd', Susd.createInstance);
 GlobalCoinFactory.registerCoinConstructor('tsusd', Tsusd.createInstance);
+GlobalCoinFactory.registerCoinConstructor('fiatusd', FiatUsd.createInstance);
+GlobalCoinFactory.registerCoinConstructor('tfiatusd', TfiatUsd.createInstance);
 GlobalCoinFactory.registerCoinConstructor('cspr', Cspr.createInstance);
 GlobalCoinFactory.registerCoinConstructor('tcspr', Tcspr.createInstance);
 GlobalCoinFactory.registerCoinConstructor('stx', Stx.createInstance);

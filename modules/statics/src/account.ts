@@ -14,6 +14,7 @@ export interface AccountConstructorOptions {
   prefix?: string;
   suffix?: string;
   primaryKeyCurve: KeyCurve;
+  kind?: CoinKind;
 }
 
 /**
@@ -36,8 +37,8 @@ export class AccountCoin extends BaseCoin {
 
   constructor(options: AccountConstructorOptions) {
     super({
-      ...options,
       kind: CoinKind.CRYPTO,
+      ...options,
     });
 
     this.network = options.network;
@@ -288,11 +289,12 @@ export class AvaxERC20Token extends ContractAddressDefinedToken {
  * @param network Network object for this coin
  * @param decimalPlaces Number of decimal places this coin supports (divisibility exponent)
  * @param asset Asset which this coin represents. This is the same for both mainnet and testnet variants of a coin.
+ * @param features? Features of this coin. Defaults to the DEFAULT_FEATURES defined in `AccountCoin`
+ * @param primaryKeyCurve? The elliptic curve for this chain/token
  * @param prefix? Optional coin prefix. Defaults to empty string
  * @param suffix? Optional coin suffix. Defaults to coin name.
  * @param isToken? Whether or not this account coin is a token of another coin
- * @param features? Features of this coin. Defaults to the DEFAULT_FEATURES defined in `AccountCoin`
- * @param primaryKeyCurve The elliptic curve for this chain/token
+ * @param kind? Differentiates coins which represent fiat assets from those which represent crypto assets
  */
 export function account(
   name: string,
@@ -304,7 +306,8 @@ export function account(
   primaryKeyCurve: KeyCurve = KeyCurve.Secp256k1,
   prefix = '',
   suffix: string = name.toUpperCase(),
-  isToken = false
+  isToken = false,
+  kind: CoinKind = CoinKind.CRYPTO
 ) {
   return Object.freeze(
     new AccountCoin({
@@ -318,6 +321,7 @@ export function account(
       isToken,
       asset,
       primaryKeyCurve,
+      kind,
     })
   );
 }
