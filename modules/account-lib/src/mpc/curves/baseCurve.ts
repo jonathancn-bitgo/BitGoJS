@@ -29,6 +29,8 @@ interface BaseCurve {
   pointAdd(p: bigint, q: bigint): bigint;
   // Function that verifies a signature.
   verify(y: bigint, signedMessage: Buffer): Buffer;
+  // order of the curve
+  order?: () => bigint;
 }
 
 export default BaseCurve;
